@@ -1,0 +1,244 @@
+--1
+--Display all columns from the customers table.
+SELECT column_name
+FROM information_schema.columns
+WHERE table_schema = 'public'
+	AND table_name = 'customers';
+
+--Show the first 10 rows from the orders table.
+SELECT * 
+FROM public.orders
+LIMIT 10;
+
+--Retrieve only the product_id, product_weight_g, and product_category_name from products.
+SELECT product_id, product_weight_g, product_category_name
+FROM public.products;
+
+--List all seller_id and their respective seller_city from the sellers table.
+SELECT seller_id, seller_city
+FROM public.sellers;
+
+--Show all columns from order_reviews where review_score equals 5.
+SELECT *
+FROM public.order_reviews
+WHERE review_score = 5;
+
+--Display all payment_type values from the order_payments table.
+SELECT DISTINCT(payment_type)
+FROM public.order_payments;
+
+--Select distinct order_status values from the orders table.
+SELECT DISTINCT(order_status)
+FROM public.orders;
+
+--Retrieve all columns from geolocation for the city 'São Paulo'.
+SELECT * 
+FROM public.geolocation
+WHERE geolocation_city ILIKE 'sao paulo%';
+
+--Show all columns from leads_qualified.
+SELECT * 
+FROM public.leads_qualified;
+
+--Display all lead_type and business_segment from leads_closed.
+SELECT lead_type, business_segment
+FROM public.leads_closed;
+
+--2
+--Get all products that weigh more than 2000 grams.
+SELECT *
+FROM public.products
+WHERE product_weight_g > 2000;
+
+--Find all orders with order_status = 'delivered'.
+SELECT order_id
+FROM public.orders
+WHERE order_status = 'delivered';
+
+--Show all sellers located in 'SP' (São Paulo state).
+SELECT *
+FROM public.sellers
+WHERE seller_city ILIKE 'sao paulo%';
+
+--Retrieve all orders purchased after '2017-06-01'.
+SELECT order_id
+FROM public.orders
+WHERE order_purchase_timestamp > '2017-06-01';
+
+--Show reviews with review_score less than 3.
+SELECT *
+FROM public.order_reviews
+WHERE review_score < 3;
+
+--Get all orders where order_estimated_delivery_date is before '2018-01-01'.
+SELECT order_id
+FROM public.orders
+WHERE order_purchase_timestamp < '2018-01-01';
+
+--Find all customers who live in 'Rio de Janeiro'.
+SELECT *
+FROM public.customers
+WHERE customer_city ILIKE 'Rio de Janeiro';
+
+--Show payments made using 'credit_card'.
+SELECT * 
+FROM public.order_payments
+WHERE payment_type = 'credit_card';
+
+--Get all leads from leads_closed where has_company = TRUE.
+SELECT *
+FROM public.leads_closed
+WHERE has_company = 1;
+
+--Find all leads_closed where declared_monthly_revenue > 10000.
+SELECT *
+FROM public.leads_closed
+WHERE declared_monthly_revenue > 10000;
+
+--3
+--Count how many customers exist in each customer_state.
+SELECT customer_state, COUNT(customer_unique_id) AS no_of_customers
+FROM public.customers
+GROUP BY customer_state
+ORDER BY COUNT(customer_unique_id) DESC;
+
+--Find the average payment_value for each payment_type.
+SELECT payment_type, AVG(payment_value) AS avg_payment_value
+FROM public.order_payments
+GROUP BY payment_type
+ORDER BY AVG(payment_value) DESC;
+
+--Calculate total payment_value collected per order_id.
+SELECT order_id, SUM(payment_value) AS total_payment_value
+FROM public.order_payments
+GROUP BY order_id
+ORDER BY SUM(payment_value) DESC;
+
+--Count total orders by order_status.
+SELECT order_status, COUNT(order_id) AS no_of_orders
+FROM public.orders
+GROUP BY order_status
+ORDER BY COUNT(order_id) DESC;
+
+--Find the average review_score for each product.
+SELECT p.product_id, ROUND(AVG(r.review_score), 2) AS avg_review_score
+FROM public.products p
+	JOIN order_items i
+		ON p.product_id=i.product_id
+			JOIN public.order_reviews r
+				ON i.order_id=r.order_id			
+GROUP BY p.product_id
+ORDER BY AVG(r.review_score) DESC;
+
+--Count how many sellers exist in each seller_state.
+SELECT seller_state, COUNT(seller_id) AS no_of_sellers
+FROM public.sellers
+GROUP BY seller_state
+ORDER BY COUNT(seller_id) DESC;
+
+--Calculate the total number of orders per month (group by month).
+SELECT EXTRACT(MONTH FROM order_purchase_timestamp::TIMESTAMP) AS month, COUNT(order_id) AS no_of_orders
+FROM public.orders
+GROUP BY EXTRACT(MONTH FROM order_purchase_timestamp)
+ORDER BY COUNT(order_id) DESC;
+
+--Find the total freight cost per seller (SUM(freight_value)).
+SELECT s.seller_id, SUM(i.freight_value) AS total_freight_cost_per_seller
+FROM public.sellers s
+	JOIN public.order_items i
+		ON s.seller_id=i.seller_id
+GROUP BY s.seller_id
+ORDER BY SUM(i.freight_value) DESC;
+
+--Show the average product weight per category.
+SELECT product_category_name, ROUND(AVG(product_weight_g::DECIMAL), 2) AS average_product_weight_per_category
+FROM public.products
+GROUP BY product_category_name
+ORDER BY AVG(product_weight_g) DESC;
+
+--Find how many reviews each review_score value received.
+SELECT review_score, COUNT(review_id) AS no_of_scores
+FROM public.order_reviews
+GROUP BY review_score
+ORDER BY COUNT(review_id) DESC;
+
+--4
+--Join orders and order_payments to show total payment per order.
+SELECT o.order_id, SUM(payment_value) AS total_payment_per_order
+FROM public.orders o
+	JOIN public.order_payments p
+		ON o.order_id = p.order_id
+GROUP BY o.order_id
+ORDER BY SUM(payment_value) DESC;
+
+--Join orders and customers to display each order’s customer city.
+SELECT o.order_id, c.customer_city
+FROM public.orders o
+	JOIN public.customers c
+		ON c.customer_id=o.customer_id
+GROUP BY o.order_id, c.customer_city;		
+
+--Join order_items and products to show the category for each order item.
+SELECT i.order_item_id, p.product_category_name AS category
+FROM public.order_items i
+	JOIN public.products p
+		ON p.product_id = i.product_id
+GROUP BY i.order_item_id, p.product_category_name
+ORDER BY i.order_item_id DESC;
+
+--Join sellers and geolocation to display each seller’s coordinates.
+SELECT s.seller_id, g.geolocation_lat, g.geolocation_lng
+FROM public.sellers s
+	JOIN public.geolocation g
+		ON s.seller_zip_code_prefix=g.geolocation_zip_code_prefix
+GROUP BY s.seller_id, g.geolocation_lat, g.geolocation_lng;	
+
+--Join orders and order_reviews to show the average review score per order status.
+SELECT o.order_status, ROUND(AVG(r.review_score), 2) as avg_score
+FROM public.orders o
+	JOIN public.order_reviews r
+		ON o.order_id = r.order_id
+GROUP BY o.order_status	
+ORDER BY AVG(r.review_score) DESC;
+
+--Join order_items and orders to find total freight cost per order status.
+SELECT o.order_status, SUM(i.freight_value) AS total_freight_value
+FROM public.orders o
+	JOIN public.order_items i
+		ON o.order_id=i.order_id
+GROUP BY o.order_status
+ORDER BY SUM(i.freight_value) DESC;
+
+--Join leads_closed and sellers to show leads per seller city.
+SELECT s.seller_city, COUNT(c.mql_id) AS leads_per_seller_city
+FROM public.sellers s
+	JOIN public.leads_closed c
+		ON s.seller_id=c.seller_id
+GROUP BY s.seller_city
+ORDER BY COUNT(c.mql_id) DESC;
+
+--Join order_items and products to show top 5 most frequently sold categories.
+SELECT p.product_category_name, COUNT(i.order_id) AS no_of_times_sold
+FROM public.order_items i
+	JOIN public.products p
+		ON i.product_id=p.product_id
+GROUP BY p.product_category_name
+ORDER BY COUNT(i.order_id) DESC;
+
+--Join leads_closed and leads_qualified to count successful conversions per origin.
+SELECT q.origin, COUNT(c.mql_id) AS successful_conversions
+FROM public.leads_closed c
+	JOIN public.leads_qualified q
+		ON c.mql_id=q.mql_id
+GROUP BY q.origin
+ORDER BY COUNT(c.mql_id) DESC;
+
+--Join orders, order_payments, and customers to find the total amount spent by each customer.
+SELECT c.customer_id, SUM(p.payment_value) AS total_spent
+FROM public.customers c
+	JOIN public.orders o
+		ON c.customer_id=o.customer_id
+			JOIN public.order_payments p
+				ON o.order_id=p.order_id
+GROUP BY c.customer_id
+ORDER BY SUM(p.payment_value) DESC;
