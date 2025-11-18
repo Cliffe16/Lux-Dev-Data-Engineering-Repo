@@ -1,0 +1,4 @@
+2025-11-19 00:02:05,137 - ERROR - SQL Programming Error in query: Check syntax/schema. Details: column "b.brand_name" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 3:             b.brand_name, 
+                    ^
+
