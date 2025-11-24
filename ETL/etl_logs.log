@@ -1,0 +1,4 @@
+2025-11-24 20:51:29 - INFO - Starting data load for countries
+2025-11-24 20:51:29 - INFO - Prepared 207 rows for insert into countries
+2025-11-24 20:51:29 - INFO - Starting data load for facts
+2025-11-24 20:51:29 - INFO - Prepared 4554 rows for insert into facts
